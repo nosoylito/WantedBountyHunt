@@ -193,7 +193,7 @@ namespace Oxide.Plugins
 
         private bool IsKilledByPlayer(BasePlayer victim, HitInfo info)
         {
-            if (info.InitiatorPlayer != null && !info.InitiatorPlayer.IsNpc && victim != info.InitiatorPlayer)
+            if (info != null && info.InitiatorPlayer != null && !info.InitiatorPlayer.IsNpc && victim != info.InitiatorPlayer && victim != null && !victim.IsNpc)
             {
                 return true;
             }
