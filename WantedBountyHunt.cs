@@ -23,6 +23,14 @@ namespace Oxide.Plugins
             return null;
         }
 
+        void OnNewSave(string filename)
+        {
+            if (config.ResetDataOnWipe)
+            {
+                DataWipe();
+            }
+        }
+
         // CONFIG
         #region "Config logic"
         private class PluginConfig
@@ -63,7 +71,7 @@ namespace Oxide.Plugins
             dataFile = Interface.Oxide.DataFileSystem.GetDatafile("WantedBountyHunt");
             if (!DataFileExists())
             {
-                FirstTimeDataFile();
+                DataWipe();
             }
         }
 
@@ -81,7 +89,7 @@ namespace Oxide.Plugins
         }
 
         // Creates data file for the first time or after wipe
-        private void FirstTimeDataFile()
+        private void DataWipe()
         {
             dataFile.Clear();
             dataFile.Save();
@@ -219,7 +227,7 @@ namespace Oxide.Plugins
             killer.inventory.GiveItem(ItemManager.CreateByItemID(-932201673, (int)dataFile["wanted", "bounty"]));
 
             // reset data
-            FirstTimeDataFile();
+            DataWipe();
         }
 
         private bool IsKillerTheBounty(HitInfo info)
