@@ -8,12 +8,16 @@ namespace Oxide.Plugins
     [Description("Server pvp minigame where the player with the most kills is declared the wanted player, and whoever kills him gets a reward")]
     public class WantedBountyHunt : RustPlugin
     {
+        #region "Fields"
         private PluginConfig config;
         private DynamicConfigFile dataFile;
+        #endregion
+
+        #region "Oxide Hooks"
 
         void Init()
         {
-            LoadConfig();
+            config = Config.ReadObject<PluginConfig>();
             InitiateData();
         }
 
@@ -30,8 +34,8 @@ namespace Oxide.Plugins
                 DataWipe();
             }
         }
+        #endregion
 
-        // CONFIG
         #region "Config logic"
         private class PluginConfig
         {
@@ -39,11 +43,6 @@ namespace Oxide.Plugins
             public int MinKillsToBeBounty;
             public int BasicBounty;
             public int BountyIncrementPerKill;
-        }
-
-        private void LoadConfig(PluginConfig config)
-        {
-            config = Config.ReadObject<PluginConfig>();
         }
 
         protected override void LoadDefaultConfig()
@@ -63,9 +62,7 @@ namespace Oxide.Plugins
         }
         #endregion
 
-        // DATA
         #region "DataFile logic"
-        // Initiate DataFile
         private void InitiateData()
         {
             dataFile = Interface.Oxide.DataFileSystem.GetDatafile("WantedBountyHunt");
@@ -75,7 +72,6 @@ namespace Oxide.Plugins
             }
         }
 
-        // Check if DataFile already exists
         private bool DataFileExists()
         {
             if (Interface.Oxide.DataFileSystem.ExistsDatafile("WantedBountyHunt"))
@@ -88,7 +84,6 @@ namespace Oxide.Plugins
             }
         }
 
-        // Creates data file for the first time or after wipe
         private void DataWipe()
         {
             dataFile.Clear();
@@ -107,14 +102,12 @@ namespace Oxide.Plugins
             }
         }
 
-        // Set Wanted Player
         private void SetWantedPlayer(BasePlayer player)
         {
             dataFile["wanted", "userid"] = player.userID.ToString();
             dataFile.Save();
         }
 
-        // Get Player Kills
         private string GetKills(BasePlayer player)
         {
             if (dataFile["players", player.userID.ToString(), "kills"] != null)
@@ -127,7 +120,6 @@ namespace Oxide.Plugins
             }
         }
 
-        // Add kill
         private void AddKill(BasePlayer player)
         {
             if (dataFile["players", player.userID.ToString(), "kills"] != null)
@@ -143,14 +135,12 @@ namespace Oxide.Plugins
             }
         }
 
-        // Increase bounty
         private void IncreaseBounty()
         {
             dataFile["wanted", "bounty"] = (int)dataFile["wanted", "bounty"] + config.BountyIncrementPerKill;
             dataFile.Save();
         }
 
-        // Check if killer is new Wanted
         private void IsKillerTheNewWanted(BasePlayer player)
         {
             if (GetWantedPlayer() != null)
@@ -165,7 +155,6 @@ namespace Oxide.Plugins
             }
             else
             {
-                // check if kills are > than X (config)
                 if ((int)dataFile["players", player.userID.ToString(), "kills"] > config.MinKillsToBeBounty)
                 {
                     rust.SendChatMessage(player, "[WantedBountyHunt]", "You're now the WANTED player! There's a price on your head!");
@@ -179,7 +168,6 @@ namespace Oxide.Plugins
         #endregion
 
         #region "OnPlayerDeath logic"
-        // Main method
         private void OnPlayerDeathWBH(BasePlayer victim, HitInfo info)
         {
             if (IsKilledByPlayer(victim, info))
@@ -223,10 +211,7 @@ namespace Oxide.Plugins
 
         private void PayAndReset(BasePlayer victim, BasePlayer killer)
         {
-            // pay
             killer.inventory.GiveItem(ItemManager.CreateByItemID(-932201673, (int)dataFile["wanted", "bounty"]));
-
-            // reset data
             DataWipe();
         }
 
@@ -242,10 +227,11 @@ namespace Oxide.Plugins
 
         #endregion
 
-        // Method to color a string
+        #region "Help and Util"
         string ColorString(string text, string color)
         {
             return "<color=" + color + ">" + text + "</color>";
         }
+        #endregion
     }
 }
