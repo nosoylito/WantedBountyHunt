@@ -1,6 +1,14 @@
 ﻿using Oxide.Core.Configuration;
 using Oxide.Core;
 using System;
+using Rust;
+using Oxide.Game.Rust.Libraries;
+using UnityEngine;
+using ConVar;
+using ProtoBuf;
+using System.Linq;
+using System.Collections.Generic;
+using UnityEngine.UIElements;
 
 namespace Oxide.Plugins
 {
@@ -151,6 +159,7 @@ namespace Oxide.Plugins
                     rust.SendChatMessage(GetWantedPlayer(), "[WantedBountyHunt]", "You're no longer the WANTED player. You're safe... for now.");
                     SetWantedPlayer(player);
                     IncreaseBounty();
+                    MakeMapMarker(player.transform.position);
                 }
             }
             else
@@ -161,6 +170,7 @@ namespace Oxide.Plugins
                     SetWantedPlayer(player);
                     dataFile["wanted", "bounty"] = config.BasicBounty;
                     dataFile.Save();
+                    MakeMapMarker(player.transform.position);
                 }
             }
         }
@@ -182,6 +192,7 @@ namespace Oxide.Plugins
                 {
                     AddKill(info.InitiatorPlayer);
                     IncreaseBounty();
+                    MakeMapMarker(info.InitiatorPlayer.transform.position);
                 }
                 else
                 {
@@ -224,6 +235,79 @@ namespace Oxide.Plugins
             return false;
         }
 
+
+        #endregion
+
+        #region "Mark Wanted Player on Compass"
+
+        private Vector3 GetWantedPlayerPosition()
+        {
+            BasePlayer wantedPlayer = GetWantedPlayer();
+            Vector3 wantedPos = new Vector3();
+            wantedPos = wantedPlayer.lastGroundedPosition;
+            return wantedPos;
+        }
+
+        private void MakeMapMarker(Vector3 playerPos)
+        {
+            //var wantedMarker = GameManager.server.CreateEntity("assets/prefabs/tools/map/genericradiusmarker.prefab", GetWantedPlayerPosition()) as MapMarkerGenericRadius;
+            var wantedMarker = GameManager.server.CreateEntity("assets/prefabs/tools/map/genericradiusmarker.prefab", playerPos) as MapMarkerGenericRadius;
+
+            if (!wantedMarker.isSpawned)
+            {
+                wantedMarker.alpha = 0.5f;
+                wantedMarker.color1 = Color.red; // Main color
+                wantedMarker.color2 = Color.black; // Outline color
+                wantedMarker.radius = 2;
+                wantedMarker.enabled = true;
+                wantedMarker.Spawn();
+            }
+            wantedMarker.SendUpdate();
+            timer.Once(60f, () =>
+            {
+                wantedMarker.AdminKill();
+            });
+        }
+
+        //[ChatCommand("marker")]
+        //private void MarkerCommand(BasePlayer player, string command, string[] args)
+        //{
+        //    MakeMapMarker(player.transform.position);
+        //}
+
+        #endregion
+
+        #region "bus stop stuff - CLUELESS"
+
+        private void GetBusStopsList()
+        {
+            //Puts(GameManager.server.FindPrefab("assets/bundled/prefabs/autospawn/decor/busstop/busstop.prefab").name);
+            var prefabList = new List<Prefab<Spawnable>>();
+
+            foreach (var population in SingletonComponent<SpawnHandler>.Instance.SpawnPopulations)
+            //foreach (var population in SingletonComponent<SpawnHandler>.Instance.ConvarSpawnPopulations)
+            {
+                var busstopPopulation = population as SpawnPopulationBase;
+                //var busstopPopulation = population as ConvarControlledSpawnPopulation;
+
+                Puts(busstopPopulation.name);
+
+                if (busstopPopulation != null && busstopPopulation.name.Equals("Busstop"))
+                {
+                    var gameObject = GameManager.server.FindPrefab("assets/bundled/prefabs/autospawn/decor/busstop/busstop.prefab");
+                    if (gameObject != null)
+                    {
+                        var spawnable = gameObject.GetComponent<Spawnable>();
+                        if (spawnable != null)
+                        {
+                            prefabList.Add(new Prefab<Spawnable>("assets/bundled/prefabs/autospawn/decor/busstop/busstop.prefab", gameObject, spawnable, GameManager.server, PrefabAttribute.server));
+                        }
+                    }
+                }
+            }
+
+            Puts("Numero de paradas de autobus: " + prefabList.Count);
+        }
 
         #endregion
 
