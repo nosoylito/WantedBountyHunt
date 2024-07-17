@@ -258,7 +258,7 @@ namespace Oxide.Plugins
                 wantedMarker.alpha = 0.5f;
                 wantedMarker.color1 = Color.red; // Main color
                 wantedMarker.color2 = Color.black; // Outline color
-                wantedMarker.radius = 2;
+                wantedMarker.radius = CalculateRadius();
                 wantedMarker.enabled = true;
                 wantedMarker.Spawn();
             }
@@ -267,6 +267,16 @@ namespace Oxide.Plugins
             {
                 wantedMarker.AdminKill();
             });
+        }
+
+        private float CalculateRadius()
+        {
+            var a = 100f / 6f;
+            var b = Mathf.Sqrt(a) / 2f;
+            var c = World.Size / 1000f;
+            var d = b / c;
+
+            return d;
         }
 
         //[ChatCommand("marker")]
